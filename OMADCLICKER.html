@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OMAD Clicker</title>
+  <style>
+    :root {
+      --bg-color: #1a1a1a;
+      --panel-bg: #2b2b2b;
+      --text-color: #f0f0f0;
+      --primary-color: #ffa500; /* Orange */
+      --secondary-color: #ffd700; /* Gold */
+      --button-hover: #ff8c00; /* Darker orange */
+      --border-color: #444;
+      --glow-color: #ffd700;
+      --premium-gradient: linear-gradient(to right, #ffd700, #ff8c00);
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
+      margin: 0;
+      background: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .header {
+      width: 100%;
+      text-align: center;
+      padding: 20px 0;
+      background: var(--panel-bg);
+      border-bottom: 2px solid var(--border-color);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    h2 {
+      margin: 0;
+      color: var(--primary-color);
+      text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    
+    .panel, .admin-panel {
+      margin-top: 20px;
+      padding: 20px;
+      background: var(--panel-bg);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      border: 1px solid var(--border-color);
+    }
+    
+    .admin-panel {
+      display: none;
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+    
+    input, button {
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: #3a3a3a;
+      color: var(--text-color);
+      font-size: 16px;
+      transition: background 0.3s, transform 0.2s;
+    }
+    
+    input::placeholder {
+      color: #aaa;
+    }
+    
+    button {
+      cursor: pointer;
+      background: var(--primary-color);
+      border: none;
+      font-weight: bold;
+    }
+    
+    button:hover:not(:disabled) {
+      background: var(--button-hover);
+      transform: translateY(-2px);
+    }
+    
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #444;
+      cursor: not-allowed;
+      color: #888;
+    }
+
+    #leaderboard div, #userList div, #withdrawList div {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #333;
+      border-radius: 5px;
+      border-left: 3px solid var(--primary-color);
+    }
+
+    .bonus-buttons button {
+      margin-right: 10px;
+    }
+
+    .premium-user {
+      background: var(--premium-gradient);
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-weight: bold;
+      color: #000;
+      box-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color);
+      animation: premiumGlow 2s infinite ease-in-out;
+    }
+
+    @keyframes premiumGlow {
+      0%, 100% { box-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color); }
+      50% { box-shadow: 0 0 10px var(--glow-color), 0 0 20px var(--glow-color); }
+    }
+    
+    .center-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .click-container {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 40px auto;
+    }
+    
+    #clickerCoin {
+      width: 100%;
+      height: 100%;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Golden_coin_icon.svg/1024px-Golden_coin_icon.svg.png') no-repeat center center;
+      background-size: contain;
+      cursor: pointer;
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--primary-color), 0 0 40px var(--secondary-color);
+      transition: transform 0.1s ease-in-out;
+    }
+
+    #clickerCoin.shake {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+    
+    .floating-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--secondary-color);
+      font-size: 2em;
+      font-weight: bold;
+      pointer-events: none;
+      animation: floatUpAndFade 1s forwards;
+      text-shadow: 0 0 5px #000, 0 0 10px var(--primary-color);
+    }
+    
+    @keyframes floatUpAndFade {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -100px);
+      }
+    }
+
+    .glow-button {
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .glow-button:before {
+      content: '';
+      background: var(--glow-color);
+      display: block;
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      opacity: 0;
+      border-radius: 50%;
+      z-index: -1;
+      animation: glow 3s infinite;
+    }
+
+    .glow-button:hover:before {
+      opacity: 0.3;
+    }
+
+    @keyframes glow {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .stats p {
+      padding: 10px 20px;
+      background: #333;
+      border-radius: 8px;
+      border: 1px solid var(--primary-color);
+      font-size: 1.1em;
+      min-width: 120px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .stats {
+        flex-direction: column;
+        align-items: center;
+      }
+      .stats p {
+        margin-bottom: 10px;
+        width: 80%;
+      }
+      .click-container {
+        width: 200px;
+        height: 200px;
+      }
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal {
+      background: var(--panel-bg);
+      border-radius: 15px;
+      border: 2px solid var(--primary-color);
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      text-align: center;
+      max-width: 90%;
+      width: 400px;
+      color: var(--text-color);
+      animation: modalEnter 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+    
+    .modal-title {
+      font-size: 1.8em;
+      color: var(--secondary-color);
+      margin-bottom: 15px;
+    }
+
+    .modal-message {
+      font-size: 1.1em;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .modal-button {
+      padding: 12px 25px;
+      background: var(--primary-color);
+      color: var(--bg-color);
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1.1em;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .modal-button:hover {
+      background: var(--button-hover);
+      transform: translateY(-2px);
+    }
+    
+    @keyframes modalEnter {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>OMAD Clicker</h2>
+  </div>
+
+  <div class="container">
+    <div id="loginPanel" class="panel">
+      <input type="text" id="username" placeholder="Enter your name">
+      <input type="password" id="password" placeholder="Enter your password" class="hidden">
+      <button id="loginBtn" onclick="login()">Login</button>
+      <button id="registerBtn" onclick="register()" class="hidden">Register</button>
+    </div>
+
+    <div id="gamePanel" class="panel hidden">
+      <p>Hello, <b id="currentUser" style="color: var(--secondary-color);"></b>! Welcome to your fiery adventure!</p>
+      
+      <div class="stats">
+        <p>💰Balance: <b id="balance" style="color: var(--secondary-color);">0</b> OMAD</p>
+        <p>📉Level: <b id="level" style="color: var(--secondary-color);">1</b></p>
+        <p>⭐️Premium: <b id="premiumStatus" style="color: var(--secondary-color);">"No"</b></p>
+      </div>
+
+      <div class="center-content">
+        <div class="click-container">
+          <div id="clickerCoin" onclick="clickTanga()"></div>
+        </div>
+        <p>Click the coin to collect OMAD!</p>
+      </div>
+
+      <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+      <h3>⚙️ Upgrades & Features</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+        <button onclick="upgradeClick()">Upgrade (Cost: <span id="upgradeCost">2000</span>)</button>
+        <button onclick="buyPremium()" class="glow-button">Premium (300,000 OMAD)</button>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <h4>🎁 Bonuses</h4>
+        <div class="bonus-buttons center-content" style="flex-direction: row; flex-wrap: wrap; gap: 10px;">
+          <button id="dailyBonusBtn" onclick="claimDailyBonus()" class="glow-button">Daily Bonus (3000 OMAD)</button>
+          <button id="hourlyBonusBtn" onclick="claimHourlyBonus()" class="glow-button">Hourly Bonus (300 OMAD)</button>
+        </div>
+      </div>
+
+      <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+      <h3>📤 Send OMAD</h3>
+      <input type="text" id="receiver" placeholder="Receiver name">
+      <input type="number" id="amountSend" placeholder="Amount (min 5,000)">
+      <button onclick="sendTanga()">Send</button>
+
+      <h3>💳 Withdraw OMAD</h3>
+      <input type="number" id="withdrawAmount" placeholder="Withdrawal amount (min 500,000)">
+      <input type="text" id="cardNumber" placeholder="Card number">
+      <button onclick="requestWithdraw()">Submit Request</button>
+      
+      <h3>💰 Deposit (Investment)</h3>
+      <p>Pay to 9860 1301 0550 5668 (in sum) and upload your receipt:</p>
+      <input type="file" id="paymentImage">
+      <input type="number" id="depositAmount" placeholder="Payment amount (UZS)">
+      <button onclick="submitDeposit()">📨 Submit Request</button>
+
+      <hr style="border-color: var(--border-color); margin: 20px 0;">
+
+      <h3>🏆 Leaderboard (Top 100)</h3>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+
+  <div id="adminPanel" class="admin-panel">
+    <h3>🔒 Admin Panel</h3>
+    <h4>User Balances</h4>
+    <div id="userList"></div>
+    <hr style="border-color: var(--border-color); margin: 20px 0;">
+    <h4>Withdrawal Requests</h4>
+    <div id="withdrawList"></div>
+  </div>
+
+  <div id="myModal" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal">
+      <h3 id="modalTitle" class="modal-title"></h3>
+      <p id="modalMessage" class="modal-message"></p>
+      <button class="modal-button" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <script>
+    let users = JSON.parse(localStorage.getItem('omad_users')) || {};
+    let user = null;
+    let withdraws = JSON.parse(localStorage.getItem('omad_withdraws')) || [];
+
+    // Ensure the admin account exists with the correct password
+    if (!users['omad']) {
+        users['omad'] = { balance: 0, level: 1, lastDaily: 0, lastHourly: 0, premium: false, password: '123sardorbek001ss00' };
+        saveUsers();
+    } else if (users['omad'].password !== '123sardorbek001ss00') {
+        users['omad'].password = '123sardorbek001ss00';
+        saveUsers();
+    }
+
+    function saveUsers() {
+      localStorage.setItem('omad_users', JSON.stringify(users));
+      updateLeaderboard();
+    }
+
+    function saveWithdraws() {
+      localStorage.setItem('omad_withdraws', JSON.stringify(withdraws));
+    }
+    
+    // Custom alert function
+    function customAlert(title, message) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('myModal').classList.remove('hidden');
+    }
+
+    function closeModal(event) {
+      if (event && event.target.classList.contains('modal-overlay')) {
+          document.getElementById('myModal').classList.add('hidden');
+          return;
+      }
+      if (!event || !event.target.closest('.modal')) {
+        document.getElementById('myModal').classList.add('hidden');
+      }
+    }
+    
+    document.getElementById('username').addEventListener('input', function() {
+      const name = this.value.trim().toLowerCase();
+      if (users[name]) {
+        document.getElementById('password').classList.remove('hidden');
+        document.getElementById('loginBtn').classList.remove('hidden');
+        document.getElementById('registerBtn').classList.add('hidden');
+      } else {
+        document.getElementById('password').classList.remove('hidden');
+        document.getElementById('loginBtn').classList.add('hidden');
+        document.getElementById('registerBtn').classList.remove('hidden');
+      }
+    });
+
+    function login() {
+      const name = document.getElementById('username').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+
+      if (!name || !password) {
+        return customAlert("Error", "Please enter both username and password.");
+      }
+
+      if (!users[name]) {
+        return customAlert("Error", "User not found. Please register or check your username.");
+      }
+      
+      if (users[name].password !== password) {
+        return customAlert("Error", "Incorrect password.");
+      }
+      
+      user = name;
+      document.getElementById('loginPanel').classList.add('hidden');
+      document.getElementById('gamePanel').classList.remove('hidden');
+      document.getElementById('currentUser').innerText = user;
+      updateBalanceUI();
+      updateLeaderboard();
+      if (user === 'omad') {
+        document.getElementById('adminPanel').style.display = 'block';
+        renderAdminPanel();
+      }
+      updateBonusButtons();
+      checkPremiumAutoBonus();
+    }
+
+    function register() {
+      const name = document.getElementById('username').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+
+      if (!name || !password) {
+        return customAlert("Error", "Please enter a username and password.");
+      }
+
+      if (users[name]) {
+        return customAlert("Error", "Username already exists. Please log in.");
+      }
+      
+      users[name] = { 
+          balance: 0, 
+          level: 1, 
+          lastDaily: 0, 
+          lastHourly: 0, 
+          premium: false,
+          password: password // Save the new password
+      };
+      
+      saveUsers();
+      customAlert("Registration Successful", "New user created! You can now log in.");
+      
+      // Clear fields and switch back to login mode
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('password').classList.add('hidden');
+      document.getElementById('loginBtn').classList.remove('hidden');
+      document.getElementById('registerBtn').classList.add('hidden');
+    }
+
+    function updateBalanceUI() {
+      document.getElementById('balance').innerText = users[user].balance.toLocaleString();
+      document.getElementById('level').innerText = users[user].level;
+      document.getElementById('upgradeCost').innerText = users[user].level * 2000;
+      if(users[user].premium){
+        document.getElementById('premiumStatus').innerHTML = '<span class="premium-user">Yes</span>';
+      } else {
+        document.getElementById('premiumStatus').innerText = 'No';
+      }
+    }
+    
+    function createFloatingText(amount) {
+      const coin = document.getElementById('clickerCoin');
+      const container = coin.parentElement;
+      const text = document.createElement('div');
+      text.innerText = `+${amount}`;
+      text.classList.add('floating-text');
+      container.appendChild(text);
+
+      setTimeout(() => {
+        container.removeChild(text);
+      }, 1000);
+    }
+
+    function clickTanga() {
+      const level = users[user].level;
+      users[user].balance += level;
+      saveUsers();
+      updateBalanceUI();
+      createFloatingText(level);
+      
+      const coin = document.getElementById('clickerCoin');
+      coin.classList.remove('shake');
+      void coin.offsetWidth;
+      coin.classList.add('shake');
+    }
+
+    function upgradeClick() {
+      const cost = users[user].level * 2000;
+      if (users[user].balance < cost) return customAlert("Error", "Insufficient funds");
+      users[user].balance -= cost;
+      users[user].level++;
+      saveUsers();
+      updateBalanceUI();
+      customAlert("Upgrade Successful!", `Your click level is now ${users[user].level}!`);
+    }
+
+    function buyPremium() {
+      if (users[user].premium) return customAlert("Already Premium", "👏You are already a premium user🤝.");
+      if (users[user].balance < 300000) return customAlert("Error", "300,000 OMAD is required for premium.");
+      users[user].balance -= 300000;
+      users[user].premium = true;
+      saveUsers();
+      updateBalanceUI();
+      updateBonusButtons();
+      checkPremiumAutoBonus();
+      customAlert("Congratulations!", "👑 You are now a Premium user🥳. Your bonuses will now be collected automatically!");
+    }
+
+    function sendTanga() {
+      const receiver = document.getElementById('receiver').value.trim().toLowerCase();
+      const amount = parseInt(document.getElementById('amountSend').value);
+      if (!receiver) return customAlert("Error", "Please enter recipient name.");
+      if (receiver === user) return customAlert("Error", "You cannot send to yourself!😁");
+      if (isNaN(amount) || amount < 5000) return customAlert("Error", "Minimum send: 5,000 OMAD");
+      if (users[user].balance < amount) return customAlert("Error", "Insufficient balance");
+      if (!users[receiver]) users[receiver] = { balance: 0, level: 1, premium: false, lastDaily: 0, lastHourly: 0 };
+      users[user].balance -= amount;
+      users[receiver].balance += amount;
+      saveUsers();
+      updateBalanceUI();
+      customAlert("Success", `✅ ${amount.toLocaleString()} OMAD sent to user ${receiver}.`);
+    }
+
+    function requestWithdraw() {
+      const amount = parseInt(document.getElementById('withdrawAmount').value);
+      const card = document.getElementById('cardNumber').value.trim();
+      if (isNaN(amount) || amount < 500000) return customAlert("Error", "Minimum withdrawal: 500,000 OMAD");
+      if (!card || card.length < 12) return customAlert("Error", "Invalid card number");
+      const total = amount + 200;
+      if (users[user].balance < total) return customAlert("Error", "Insufficient funds including commission! Commission: 200 OMAD");
+      users[user].balance -= total;
+      withdraws.push({ user, amount, card });
+      saveUsers();
+      saveWithdraws();
+      updateBalanceUI();
+      sendTelegram(`🧾 New withdrawal request: ${user} - ${amount.toLocaleString()} OMAD, card: ${card}`);
+      renderAdminPanel();
+      customAlert("Request Submitted", "Your withdrawal request has been submitted. The admin will process it shortly.");
+    }
+
+    function sendTelegram(text) {
+      const token = "7313854901:AAG7ehG9wy4bL7mdUZBgabhi-DwOPvqD1Fk";
+      const chat_id = "7591339834";
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id, text })
+      });
+    }
+
+    function sendTelegramPhoto(base64, caption) {
+      const token = "7313854901:AAG7ehG9wy4bL7mdUZBgabhi-DwOPvqD1Fk";
+      const chat_id = "7591339834";
+      fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id,
+          photo: base64,
+          caption,
+          parse_mode: "Markdown"
+        })
+      });
+    }
+
+    function submitDeposit() {
+      const fileInput = document.getElementById('paymentImage');
+      const amount = parseInt(document.getElementById('depositAmount').value);
+      if (!fileInput.files[0]) return customAlert("Error", "Please upload a receipt image");
+      if (isNaN(amount) || amount <= 0) return customAlert("Error", "Please enter payment amount");
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Image = e.target.result;
+        const OMADamount = amount * 100;
+        const text = `💳 *New Deposit Request*\n👤 User: ${user}\n💸 Amount: ${amount.toLocaleString()} UZS\n📥 Requested: ${OMADamount.toLocaleString()} OMAD\n🖼 Receipt image:`;
+        sendTelegramPhoto(base64Image, text);
+        customAlert("Request Submitted", "✅ Your deposit request has been submitted! The admin will review and add OMAD to your balance.");
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    function renderAdminPanel() {
+      let html = "";
+      for (let u in users) {
+        html += `<div><b>${u}</b>: ${users[u].balance.toLocaleString()} OMAD<br>`;
+        const amounts = [1, 100, 1000, 5000, 10000, 100000, 500000];
+        for (let amt of amounts) {
+          html += `<button onclick="editBalance('${u}', ${amt})">+${amt.toLocaleString()}</button> `;
+          html += `<button onclick="editBalance('${u}', -${amt})">-${amt.toLocaleString()}</button> `;
+        }
+        html += `</div><hr>`;
+      }
+      document.getElementById('userList').innerHTML = html;
+
+      let withdrawHtml = "";
+      withdraws.forEach(w => {
+        withdrawHtml += `<div>${w.user}: ${w.amount.toLocaleString()} OMAD → ${w.card}</div>`;
+      });
+      document.getElementById('withdrawList').innerHTML = withdrawHtml;
+    }
+
+    function editBalance(u, delta) {
+      users[u].balance += delta;
+      saveUsers();
+      renderAdminPanel();
+      updateLeaderboard();
+      if (u === user) updateBalanceUI();
+    }
+
+    function updateLeaderboard() {
+      const top = Object.entries(users)
+        .sort((a, b) => b[1].balance - a[1].balance)
+        .slice(0, 100);
+
+      document.getElementById('leaderboard').innerHTML = top.map(([name, data], i) => {
+        const isPremium = data.premium;
+        const label = isPremium
+          ? `<span class="premium-user">⭐ ${name}</span>`
+          : name;
+        return `${i + 1}. ${label}: ${data.balance.toLocaleString()} OMAD`;
+      }).join('<br>');
+    }
+
+    function updateBonusButtons() {
+      const now = Date.now();
+      if (users[user].premium) {
+        document.getElementById('dailyBonusBtn').disabled = true;
+        document.getElementById('hourlyBonusBtn').disabled = true;
+      } else {
+        document.getElementById('dailyBonusBtn').disabled = (now - users[user].lastDaily < 86400000);
+        document.getElementById('hourlyBonusBtn').disabled = (now - users[user].lastHourly < 3600000);
+      }
+    }
+
+    function claimDailyBonus() {
+      const now = Date.now();
+      if (now - users[user].lastDaily < 86400000) return;
+      users[user].balance += 3000;
+      users[user].lastDaily = now;
+      saveUsers();
+      updateBalanceUI();
+      updateBonusButtons();
+      customAlert("Bonus Collected!", "Daily bonus of 3,000 OMAD collected!");
+    }
+
+    function claimHourlyBonus() {
+      const now = Date.now();
+      if (now - users[user].lastHourly < 3600000) return;
+      users[user].balance += 300;
+      users[user].lastHourly = now;
+      saveUsers();
+      updateBalanceUI();
+      updateBonusButtons();
+      customAlert("Bonus Collected!", "Hourly bonus of 300 OMAD collected!");
+    }
+
+    function checkPremiumAutoBonus() {
+      if (!users[user] || !users[user].premium) return;
+      const now = Date.now();
+      let bonusCollected = false;
+
+      if (now - users[user].lastDaily >= 86400000) {
+        users[user].balance += 3000;
+        users[user].lastDaily = now;
+        bonusCollected = true;
+      }
+      if (now - users[user].lastHourly >= 3600000) {
+        users[user].balance += 300;
+        users[user].lastHourly = now;
+        bonusCollected = true;
+      }
+      if (bonusCollected) {
+        saveUsers();
+        updateBalanceUI();
+        //customAlert("Auto-Bonus", "Your daily and/or hourly bonuses have been automatically collected!");
+      }
+    }
+  </script>
+</body>
+</html>
